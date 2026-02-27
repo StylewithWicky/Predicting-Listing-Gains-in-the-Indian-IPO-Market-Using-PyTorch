@@ -1,0 +1,21 @@
+[project]
+name = "predicting-listing-gains-in-the-indian-ipo-market-using-pytorch"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "beautifulsoup4>=4.14.3",
+    "cloudscraper>=1.2.71",
+    "gradio>=6.7.0",
+    "html5lib>=1.1",
+    "lxml>=6.0.2",
+    "numpy>=2.4.2",
+    "pandas>=3.0.1",
+    "requests>=2.32.5",
+    "scikit-learn>=1.8.0",
+    "selenium>=4.41.0",
+    "selenium-stealth>=1.0.6",
+    "webdriver-manager>=4.0.2",
+    "yfinance>=1.2.0",
+]
