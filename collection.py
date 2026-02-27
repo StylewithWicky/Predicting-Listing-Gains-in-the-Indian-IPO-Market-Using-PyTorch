@@ -14,7 +14,7 @@ def clean_currency(value):
     """Helper to convert currency strings to floats safely."""
     if pd.isna(value) or value == '-': 
         return 0.0
-    # Ensure it's a string before regex, then remove non-numeric chars
+    
     clean_val = re.sub(r'[^\d.]', '', str(value))
     try:
         return float(clean_val) if clean_val else 0.0
@@ -23,14 +23,14 @@ def clean_currency(value):
 
 def derive_ticker(name):
     """Safely extracts a possible NSE ticker from a Company Name string."""
-    # Check if name is actually a string (prevents 'float' error on empty rows)
+   
     if pd.isna(name) or not isinstance(name, str):
         return None
     
-    # Clean name: remove 'Limited', 'Ltd', and text in brackets
+    
     clean = re.sub(r'Limited|Ltd|LTD|LIMITED|\(.*\)', '', name, flags=re.IGNORECASE).strip()
     
-    # Take the first word and add .NS
+  
     words = clean.split()
     if words:
         return f"{words[0].upper()}.NS"
@@ -57,7 +57,7 @@ def get_collection():
     )
 
     try:
-        print("🛰️  Bypassing protection and fetching 2026 IPO data...")
+        print("Bypassing protection and fetching 2026 IPO data...")
         driver.get(url)
         time.sleep(10) 
         
@@ -65,19 +65,19 @@ def get_collection():
         df_list = pd.read_html(io.StringIO(html_content))
         
         if not df_list:
-            print("❌ No tables found.")
+            print(" No tables found.")
             return None
 
-        # Pick the largest table (the main IPO report)
+      
         df = max(df_list, key=len)
         
-        # Clean column headers
+       
         df.columns = [str(col).replace('▲▼', '').strip() for col in df.columns]
 
-        # 🛑 CRITICAL: Remove rows where Company is missing to prevent logic errors
+       
         df = df.dropna(subset=['Company'])
 
-        # --- SMART TICKER DERIVATION ---
+        
         symbol_col = next((c for c in ['Symbol', 'NSE Symbol', 'Ticker'] if c in df.columns), None)
         
         if symbol_col:
@@ -86,11 +86,11 @@ def get_collection():
             print("🔍 Deriving Tickers from Company names safely...")
             df['YF_Ticker'] = df['Company'].apply(derive_ticker)
             
-        print(f"✅ Captured {len(df)} IPO entries.")
+        print(f" Captured {len(df)} IPO entries.")
         return df
 
     except Exception as e:
-        print(f"💥 Scraping Error: {e}")
+        print(f" Scraping Error: {e}")
         return None
     finally:
         driver.quit()
@@ -99,14 +99,14 @@ def live_prices(df):
     if df is None or 'YF_Ticker' not in df.columns:
         return df
 
-    print("📈 Fetching live prices for valid tickers...")
+    print("Fetching live prices ")
     
-    # Pre-clean the price columns so math can be done later
+    
     price_cols = [c for c in df.columns if 'Price' in c or 'Rs' in c]
     for col in price_cols:
         df[col] = df[col].apply(clean_currency)
 
-    # We use a copy of the head to avoid setting with copy warnings
+
     valid_tickers_df = df[df['YF_Ticker'].notna()].head(10) 
     
     for idx, row in valid_tickers_df.iterrows():
@@ -116,7 +116,7 @@ def live_prices(df):
             price = stock.fast_info['last_price']
             if price and price > 0:
                 df.at[idx, 'Live_Price'] = round(price, 2)
-                print(f"   ✅ {ticker}: ₹{round(price, 2)}")
+                print(f"    {ticker}: ₹{round(price, 2)}")
         except:
             continue
             
@@ -129,18 +129,17 @@ if __name__=="__main__":
     if raw_data is not None:
         final_data = live_prices(raw_data)
         
-        # Calculate Listing Gain % (This is the Target/Label for our AI)
-        # Using the column names identified in your previous run
+        
         issue_col = 'Issue Price (Rs.)'
         listing_col = 'Close Price on Listing (Rs.)'
 
         if issue_col in final_data.columns and listing_col in final_data.columns:
-            # Avoid division by zero
+            
             final_data = final_data[final_data[issue_col] > 0]
             final_data['Listing_Gain_Pct'] = ((final_data[listing_col] - final_data[issue_col]) / final_data[issue_col]) * 100
 
         output_path = "data_processed/ipo_tracker_cleaned.csv"
         final_data.to_csv(output_path, index=False)
-        print(f"🏆 Phase 1 & Preprocessing Complete. Saved {len(final_data)} rows to {output_path}")
+        print(f" Phase 1 & Preprocessing Complete. Saved {len(final_data)} rows to {output_path}")
     else:
-        print("💀 Critical Error: No data collected.")
+        print(" Critical Error: No data collected.")
