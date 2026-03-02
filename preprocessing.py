@@ -29,8 +29,7 @@ def feature_enginnering(file_path):
         print(f"Loaded data with {len(df)} entries and {len(df.columns)} columns.")
         
         df['Subscription (x)']=pd.to_numeric(df['Subscription (x)'],errors='coerce')
-        df['Subscription (x)'].fillna(df['Subscription (x)'].median(),inplace=True)
-        
+        df['Subscription (x)'] =df["Subscription (x)"].fillna(df["Subscription (x)"].median())
         feature=['Issue Price (Rs.)','Subscription (x)']
         target=['Listing_Gain_Pct']
         
@@ -58,12 +57,29 @@ def feature_enginnering(file_path):
     except Exception as e:
         print(f"Error during feature engineering: {e}")
         return None, None
-if __name__=="__main__":
+if __name__ == "__main__":
     
-    os.makedirs("data_processed", exist_ok=True)
-    train_data,test_data=feature_enginnering("data_processed/ipo_tracker_cleaned.csv")
+    train_ds, test_ds = feature_enginnering("data_processed/ipo_tracker_cleaned.csv")
     
-    if train_data is not None and test_data is not None:
-        torch.save(train_data,"data_processed/train_data.pt")
-        torch.save(test_data,"data_processed/test_data.pt")
-        print("Preprocessing completed and data saved successfully.")
+    if train_ds is not None:
+        
+        train_loader = DataLoader(train_ds, batch_size=4, shuffle=True)
+
+        
+        sample_features, sample_targets = next(iter(train_loader))
+
+        print("\n" + "="*30)
+        print(" FINAL PREPROCESSING REPORT")
+        print("="*30)
+        print(f" Training Samples: {len(train_ds)}")
+        print(f" Testing Samples:  {len(test_ds)}")
+        print(f" Feature Shape:    {sample_features.shape}") 
+        print(f" Target Shape:     {sample_targets.shape}")
+        
+       
+        print(f"\n Scaled Feature Sample: {sample_features[0].tolist()}")
+        print(f"  Scaled Target Sample:  {sample_targets[0].tolist()}")
+        
+        if abs(sample_features.mean()) < 1.0:
+            print("\nSTATUS: Ready for Brain Construction.")
+        print("="*30)
